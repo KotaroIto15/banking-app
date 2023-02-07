@@ -1,0 +1,36 @@
+#account {
+   background-color: rgb(12, 135, 94);
+   border-radius: 5px;
+}
+
+#balance {
+    border-radius: 5px;
+}
+
+.info {
+    color: white;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.clickable {
+    background-color: rgb(10, 57, 115);
+    border-radius: 5px;
+}
+
+.menu-title {
+    font-weight: bold;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: white;
+}
+
+.fa-wallet {
+    color: white;
+}
+
+.fa-coins {
+    color: white;
+}
+
+.fa-home {
+    color: white;
+}
