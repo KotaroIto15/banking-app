@@ -18,7 +18,19 @@ const config = {
     home: document.createElement("background"),
     initialForm: document.getElementById("info"),
     bankPage: document.getElementById("bank-page"),
+    sidePage: document.getElementById("side-page"),
 }
+
+function displayNone(ele) {
+    ele.classList.remove("d=block");
+    ele.classList.add("d-none");
+}
+
+function displayBlock(ele) {
+    ele.classList.remove("d-none");
+    ele.classList.add("d-block");
+}
+
 
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
@@ -33,8 +45,15 @@ function initializeUserAccount() {
         parseInt(config.initialForm.querySelectorAll('input[name="deposit"]').item(0).value),
     );
 
-    config.initialForm.classList.add("d-none");
+    displayNone(config.initialForm);
     config.bankPage.append(mainBankPage(userAccount));
+    displayBlock(config.bankPage);
+}
+
+function withdrawController() {
+    displayNone(config.bankPage);
+    config.sidePage.append(withdrawPage());
+    displayBlock(config.sidePage);
 }
 
 function mainBankPage(account) {
@@ -66,7 +85,8 @@ function mainBankPage(account) {
     let withdrawalMenu = document.createElement("div");
     withdrawalMenu.classList.add("col-11", "hoverable", "d-flex", "flex-column", "align-items-center", "justify-content-center", "my-3", "pb-2", "hover");
     withdrawalMenu.addEventListener("click", function(){
-        alert("Withdrawal");
+        withdrawController();
+        event.preventDefault();
     });
     withdrawalMenu.innerHTML = 
     `
@@ -106,5 +126,75 @@ function mainBankPage(account) {
     container.append(basicInfo, balance, withdrawalMenu, depositMenu, comebackMenu);
 
 
+    return container;
+}
+
+function billInputSelector(title, backString, nextString) {
+    let container = document.createElement("div");
+    container.classList.add("d-flex", "bg-light", "col-10", "flex-column", "align-items-center");
+
+    container.innerHTML = 
+    `
+    <div id = "section0-title" class = "d-flex col-11 mt-3">
+        <p class = "fw-bold fs-2 vw-100 text-center">${title}</p>
+    </div>
+
+    <div id = "amounts" class = "d-flex col-11 flex-column align-items-center">
+        <div id = "100-dollar" class = "d-flex col-10 justify-content-between mb-2">
+            <span class="text-start">$100</span>
+            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+        </div>
+
+        <div id = "50-dollar" class = "d-flex col-10 justify-content-between my-2">
+            <span class="text-start">$50</span>
+            <input type="number" id="50" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+        </div>
+
+        <div id = "20-dollar" class = "d-flex col-10 justify-content-between my-2">
+            <span class="text-start">$20</span>
+            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+        </div>
+
+        <div id = "10-dollar" class = "d-flex col-10 justify-content-between my-2">
+            <span class="text-start">$10</span>
+            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+        </div>
+
+        <div id = "5-dollar" class = "d-flex col-10 justify-content-between my-2">
+            <span class="text-start">$5</span>
+            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+        </div>
+
+        <div id = "1-dollar" class = "d-flex col-10 justify-content-between my-2">
+            <span class="text-start">$1</span>
+            <input type="number" id="1" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+        </div>
+    </div>
+
+    <div id="total-div" class="d-flex col-10 justify-content-center align-items-center bg-primary bg-gradient my-3">
+        <span id="total" class="fs-6 text-light my-2">$0.00</span>
+    </div>
+    `;
+
+    container.append(backNextBtn(backString, nextString));
+
+    return container;
+}
+
+function backNextBtn(backString, nextString) {
+    let container = document.createElement("div");
+
+    container.classList.add("d-flex", "justify-content-center", "col-11", "mt-3", "mb-4")
+    container.innerHTML = 
+    `
+        <button id="go-back" class="btn btn-outline-primary col-5 mx-1">${backString}</button>
+        <button id="confirm" class="btn btn-primary text-light fw-bold col-5">${nextString}</button>
+    `;
+
+    return container;
+}
+
+function withdrawPage() {
+    let container = billInputSelector("Please Enter The Withdrawal Amount", "Go Back", "Next");
     return container;
 }
