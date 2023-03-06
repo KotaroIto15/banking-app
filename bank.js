@@ -54,6 +54,14 @@ function withdrawController() {
     displayNone(config.bankPage);
     config.sidePage.append(withdrawPage());
     displayBlock(config.sidePage);
+
+    let inputs = document.querySelectorAll(".bill-input");
+    inputs.forEach(function(input) {
+        input.addEventListener("change", function() {
+            let total = document.getElementById("total");
+            total.innerHTML = parseInt(total.innerHTML) + (input.value * parseInt(input.dataset.bill));
+        });
+    }); 
 }
 
 function mainBankPage(account) {
@@ -142,37 +150,37 @@ function billInputSelector(title, backString, nextString) {
     <div id = "amounts" class = "d-flex col-11 flex-column align-items-center">
         <div id = "100-dollar" class = "d-flex col-10 justify-content-between mb-2">
             <span class="text-start">$100</span>
-            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark bill-input" placeholder="Please enter amount" data-bill="100">
         </div>
 
         <div id = "50-dollar" class = "d-flex col-10 justify-content-between my-2">
             <span class="text-start">$50</span>
-            <input type="number" id="50" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+            <input type="number" id="50" class="w-75 text-end rounded border-2 border-dark bill-input" placeholder="Please enter amount" data-bill="50">
         </div>
 
         <div id = "20-dollar" class = "d-flex col-10 justify-content-between my-2">
             <span class="text-start">$20</span>
-            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+            <input type="number" id="20" class="w-75 text-end rounded border-2 border-dark bill-input" placeholder="Please enter amount" data-bill="20">
         </div>
 
         <div id = "10-dollar" class = "d-flex col-10 justify-content-between my-2">
             <span class="text-start">$10</span>
-            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+            <input type="number" id="10" class="w-75 text-end rounded border-2 border-dark bill-input" placeholder="Please enter amount" data-bill="10">
         </div>
 
         <div id = "5-dollar" class = "d-flex col-10 justify-content-between my-2">
             <span class="text-start">$5</span>
-            <input type="number" id="100" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+            <input type="number" id="5" class="w-75 text-end rounded border-2 border-dark bill-input" placeholder="Please enter amount" data-bill="5">
         </div>
 
         <div id = "1-dollar" class = "d-flex col-10 justify-content-between my-2">
             <span class="text-start">$1</span>
-            <input type="number" id="1" class="w-75 text-end rounded border-2 border-dark" placeholder="Please enter amount" >
+            <input type="number" id="1" class="w-75 text-end rounded border-2 border-dark bill-input" placeholder="Please enter amount" data-bill="1">
         </div>
     </div>
 
     <div id="total-div" class="d-flex col-10 justify-content-center align-items-center bg-primary bg-gradient my-3">
-        <span id="total" class="fs-6 text-light my-2">$0.00</span>
+        <span id="total" class="fs-6 text-light my-2">0.00</span>
     </div>
     `;
 
