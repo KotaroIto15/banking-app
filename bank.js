@@ -12,6 +12,10 @@ class BankAccount {
     getFullName() {
         return this.firstName + " " + this.lastName;
     }
+
+    updateMoney(amount) {
+        this.money -= amount;
+    }
 }
 
 const config = {
@@ -19,6 +23,7 @@ const config = {
     initialForm: document.getElementById("info"),
     bankPage: document.getElementById("bank-page"),
     sidePage: document.getElementById("side-page"),
+    calculationBox: document.getElementById("calculation-box"),
 }
 
 function displayNone(ele) {
@@ -50,7 +55,7 @@ function initializeUserAccount() {
     displayBlock(config.bankPage);
 }
 
-function withdrawController() {
+function withdrawController(account) {
     displayNone(config.bankPage);
     config.sidePage.append(withdrawPage());
     displayBlock(config.sidePage);
@@ -59,9 +64,47 @@ function withdrawController() {
     inputs.forEach(function(input) {
         input.addEventListener("change", function() {
             let total = document.getElementById("total");
-            total.innerHTML = parseInt(total.innerHTML) + (input.value * parseInt(input.dataset.bill));
+            total.innerHTML = billSummation(inputs);
         });
     }); 
+
+    let back = document.getElementById("go-back");
+    back.addEventListener("click", function() {
+        displayNone(config.sidePage);
+        displayBlock(config.bankPage);
+        config.sidePage.innerHTML = "";
+        config.bankPage.append(mainBankPage(account));
+    });
+
+    let next = document.getElementById("confirm");
+    next.addEventListener("click", function() {
+        config.sidePage.innerHTML = "";
+        calculationBoxController(account, inputs);
+    });
+}
+
+function calculationBoxController(account, inputs) {
+    let total = calculateWithdrawalAmount(account, inputs);
+    config.calculationBox.append(billDialog(inputs, total));
+    displayNone(config.sidePage);
+    displayBlock(config.calculationBox);
+
+    let back = document.getElementById("go-back");
+    back.addEventListener("click", function() {
+        displayNone(config.calculationBox);
+        displayBlock(config.sidePage);
+        config.calculationBox.innerHTML = "";
+        withdrawController(account);
+    });
+
+    let confirm = document.getElementById("confirm");
+    confirm.addEventListener("click", function() {
+        account.updateMoney(parseInt(total));
+        displayNone(config.calculationBox);
+        displayBlock(config.bankPage);
+        config.calculationBox.innerHTML = "";
+        config.bankPage.append(mainBankPage(account));
+    });
 }
 
 function mainBankPage(account) {
@@ -93,7 +136,8 @@ function mainBankPage(account) {
     let withdrawalMenu = document.createElement("div");
     withdrawalMenu.classList.add("col-11", "hoverable", "d-flex", "flex-column", "align-items-center", "justify-content-center", "my-3", "pb-2", "hover");
     withdrawalMenu.addEventListener("click", function(){
-        withdrawController();
+        config.bankPage.innerHTML = "";
+        withdrawController(account);
         event.preventDefault();
     });
     withdrawalMenu.innerHTML = 
@@ -205,4 +249,59 @@ function backNextBtn(backString, nextString) {
 function withdrawPage() {
     let container = billInputSelector("Please Enter The Withdrawal Amount", "Go Back", "Next");
     return container;
+}
+
+function billSummation(inputs) {
+    total = 0;
+
+    inputs.forEach(function(input) {
+        if (input.value) total += parseInt(input.value) * input.dataset.bill;
+    });
+
+    return total.toString();
+}
+
+function billDialog(inputs, totalAmount) {
+    let main = document.createElement("div");
+    main.classList.add("bg-light", "d-flex", "col-10", "flex-column", "align-items-center");
+
+    main.innerHTML = 
+    `
+    <div id="section-title" class="d-flex mt-3 col-11 justify-content-center align-items-center">
+        <p class="fw-bold fs-2 text-dark text-center">The money you are going to take is ...</p>
+    </div>
+
+    <div id='amounts-div' class="d-flex bg-dark flex-column col-8 p-1">
+        <div id="$100" class="d-flex col-12 justify-content-end border border-light my-1">
+            <span class="fs-4 text-light text-end m-2">${(inputs[0].value) ? inputs[0].value : "0"} x $100</span>
+        </div>
+        <div id="$50" class="d-flex col-12 justify-content-end border border-light my-1">
+            <span class="fs-4 text-light text-end m-2">${(inputs[1].value) ? inputs[1].value : "0"} x $50</span>
+        </div>
+        <div id="$20" class="d-flex col-12 justify-content-end border border-light my-1">
+            <span class="fs-4 text-light text-end m-2">${(inputs[2].value) ? inputs[2].value : "0"} x $20</span>
+        </div>
+        <div id="$5" class="d-flex col-12 justify-content-end border border-light my-1">
+            <span class="fs-4 text-light text-end m-2">${(inputs[3].value) ? inputs[3].value : "0"} x $5</span>
+        </div>
+        <div id="$1" class="d-flex col-12 justify-content-end border border-light my-1">
+            <span class="fs-4 text-light text-end m-2">${(inputs[4].value) ? inputs[4].value : "0"} x $1</span>
+        </div>
+        <div id="total" class="d-flex col-12 justify-content-between align-items-center mt-1 mb-2">
+            <span class="text-start text-light m-1 fs-4">Total to be withdrawn:</span>
+            <span class="text-end text-light m-1 fs-4">$${totalAmount}</span>
+        </div>
+    </div>
+    `;
+
+    main.append(backNextBtn("Go Back", "Confirm"));
+
+    return main;
+}
+
+function calculateWithdrawalAmount(account, inputs) {
+    max_amount = account.money * 0.2;
+    amount = parseInt(billSummation(inputs));
+
+    return (max_amount < amount) ? max_amount.toString() : amount.toString();
 }
