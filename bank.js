@@ -1,4 +1,11 @@
+/**
+ * ------------------------------------------------------------------------------------------------
+ * CLASS DECLARATION: BankAcount
+ * ------------------------------------------------------------------------------------------------
+ */
+
 class BankAccount {
+    // constructor
     constructor(firstName, lastName, email, type, money) {
         this.firstName = firstName;
         this.lastName = lastName;
@@ -13,11 +20,19 @@ class BankAccount {
         return this.firstName + " " + this.lastName;
     }
 
-    updateMoney(amount) {
-        this.money -= amount;
+    // if withdrawn, subtract amount from money.
+    // if deposited, add amount to money.
+    updateMoney(verb, amount) {
+        if (verb === "take") this.money -= amount;
+        else this.money += amount;
     }
 }
 
+/**
+ * ------------------------------------------------------------------------------------------------
+ * CONSTANTS
+ * ------------------------------------------------------------------------------------------------
+ */
 const config = {
     home: document.createElement("background"),
     initialForm: document.getElementById("info"),
@@ -26,21 +41,97 @@ const config = {
     calculationBox: document.getElementById("calculation-box"),
 }
 
+/**
+ * ------------------------------------------------------------------------------------------------
+ * HELPER FUNCTIONS
+ * ------------------------------------------------------------------------------------------------
+ */
+
+
+/**
+ * @param {HTMLElement} ele : element to hide
+ * set ele to be invisible 
+ */
 function displayNone(ele) {
-    ele.classList.remove("d=block");
+    ele.classList.remove("d-block");
     ele.classList.add("d-none");
 }
 
+/**
+ * @param {HTMLElement} ele : element to show
+ * set ele to be visible from the user
+ */
 function displayBlock(ele) {
     ele.classList.remove("d-none");
     ele.classList.add("d-block");
 }
 
-
+/**
+ * @param {int} min : lower bound of the output
+ * @param {int} max : upper bound of the output
+ * @returns a random integer within the interval [min, max]
+ */
 function getRandomInteger(min, max) {
     return Math.floor(Math.random() * (max - min) + min);
 }
 
+/**
+ * 
+ * @param {HTMLElement} hide : a page to hide 
+ * @param {HTMLElement} show : a page to show
+ */
+function switchPage(hide, show) {
+    hide.innerHTML = "";
+    show.innerHTML = "";
+    displayNone(hide);
+    displayBlock(show);
+}
+
+/**
+ * @param {NodeListOf<Element>} inputs : the collection of bill inputs.
+ * @returns total amount of money entered, as a String
+ */
+function billSummation(inputs) {
+    total = 0;
+
+    inputs.forEach(function(input) {
+        if (input.value) total += parseInt(input.value) * input.dataset.bill;
+    });
+
+    return total.toString();
+}
+
+/**
+ * @param {BankAccount} account : user's bank account, used for getting the current balance
+ * @param {NodeListOf<Element>} inputs : the collection of bill inputs.
+ * @returns the maximum amount the user can withdraw from their account.
+ *          when the total amount the user have inputted is greater than 20% of their current balance,
+ *          returns 20% of current balance. Otherwise, return the total amount inputted.
+ */
+function calculateWithdrawalAmount(account, inputs) {
+    max_amount = account.money * 0.2;
+    amount = parseInt(billSummation(inputs));
+
+    return (max_amount < amount) ? max_amount.toString() : amount.toString();
+}
+
+/**
+ * @param {NodeListOf<Element>} inputs : the collection of bill inputs.
+ * @returns the amount of money the user is to deposit.
+ */
+function calculateDepositAmount(inputs) {
+    return parseInt(billSummation(inputs));
+}
+
+/**
+ * ------------------------------------------------------------------------------------------------
+ * PAGE FUNCTIONS - MAIN
+ * ------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * creates the instance of the user's account from the information given by the form.
+ */
 function initializeUserAccount() {
     let userAccount = new BankAccount(
         config.initialForm.querySelectorAll('input[name="first-name"]').item(0).value,
@@ -50,63 +141,14 @@ function initializeUserAccount() {
         parseInt(config.initialForm.querySelectorAll('input[name="deposit"]').item(0).value),
     );
 
-    displayNone(config.initialForm);
+    switchPage(config.initialForm, config.bankPage);
     config.bankPage.append(mainBankPage(userAccount));
-    displayBlock(config.bankPage);
 }
 
-function withdrawController(account) {
-    displayNone(config.bankPage);
-    config.sidePage.append(withdrawPage());
-    displayBlock(config.sidePage);
-
-    let inputs = document.querySelectorAll(".bill-input");
-    inputs.forEach(function(input) {
-        input.addEventListener("change", function() {
-            let total = document.getElementById("total");
-            total.innerHTML = billSummation(inputs);
-        });
-    }); 
-
-    let back = document.getElementById("go-back");
-    back.addEventListener("click", function() {
-        displayNone(config.sidePage);
-        displayBlock(config.bankPage);
-        config.sidePage.innerHTML = "";
-        config.bankPage.append(mainBankPage(account));
-    });
-
-    let next = document.getElementById("confirm");
-    next.addEventListener("click", function() {
-        config.sidePage.innerHTML = "";
-        calculationBoxController(account, inputs);
-    });
-}
-
-function calculationBoxController(account, inputs) {
-    let total = calculateWithdrawalAmount(account, inputs);
-    config.calculationBox.append(billDialog(inputs, total));
-    displayNone(config.sidePage);
-    displayBlock(config.calculationBox);
-
-    let back = document.getElementById("go-back");
-    back.addEventListener("click", function() {
-        displayNone(config.calculationBox);
-        displayBlock(config.sidePage);
-        config.calculationBox.innerHTML = "";
-        withdrawController(account);
-    });
-
-    let confirm = document.getElementById("confirm");
-    confirm.addEventListener("click", function() {
-        account.updateMoney(parseInt(total));
-        displayNone(config.calculationBox);
-        displayBlock(config.bankPage);
-        config.calculationBox.innerHTML = "";
-        config.bankPage.append(mainBankPage(account));
-    });
-}
-
+/**
+ * @param {BankAccount} account : user's account information.
+ * @returns a new HTML showing the user's account info along with the buttons for different menu (i.e., withdrawal, deposit, come back)
+ */
 function mainBankPage(account) {
     let basicInfo = document.createElement("div");
     basicInfo.classList.add("d-flex", "col-11", "flex-column", "align-items-end", "justify-content-center");
@@ -135,11 +177,13 @@ function mainBankPage(account) {
 
     let withdrawalMenu = document.createElement("div");
     withdrawalMenu.classList.add("col-11", "hoverable", "d-flex", "flex-column", "align-items-center", "justify-content-center", "my-3", "pb-2", "hover");
-    withdrawalMenu.addEventListener("click", function(){
-        config.bankPage.innerHTML = "";
-        withdrawController(account);
-        event.preventDefault();
+    
+    // when the menu is selected, switches page to the withdrawal page.
+    withdrawalMenu.addEventListener("click", function() {
+        switchPage(config.bankPage, config.sidePage);
+        config.sidePage.append(withdrawPage(account));
     });
+
     withdrawalMenu.innerHTML = 
     `
         <span class = "menu-title fs-3 my-2">WITHDRAWAL</span>
@@ -150,9 +194,13 @@ function mainBankPage(account) {
     `;
 
     let depositMenu = document.createElement("div");
-    depositMenu.addEventListener("click", function(){
-        alert("Deposit");
+
+    // when the menu is selected, switches page to the deposit page.
+    depositMenu.addEventListener("click", function() {
+        switchPage(config.bankPage, config.sidePage);
+        config.sidePage.append(depositPage(account));
     });
+
     depositMenu.classList.add("col-11", "hoverable", "d-flex", "flex-column", "align-items-center", "justify-content-center",
     "position-relative", "my-3", "pb-2", "hover");
     depositMenu.innerHTML = 
@@ -162,9 +210,14 @@ function mainBankPage(account) {
     `;
 
     let comebackMenu = document.createElement("div");
-    comebackMenu.addEventListener("click", function(){
-        alert("Come back later");
+
+    // when the menu is selected, switches page to the come-back page.
+    comebackMenu.addEventListener("click", function() {
+        switchPage(config.bankPage, config.sidePage);
+        // config.sidePage.append(comebackPage(account));
+        console.log("test2");
     });
+
     comebackMenu.classList.add("col-11", "hoverable", "d-flex", "flex-column", "align-items-center", "justify-content-center",
     "position-relative", "my-3", "pb-2", "hover");
     comebackMenu.innerHTML = 
@@ -181,6 +234,140 @@ function mainBankPage(account) {
     return container;
 }
 
+/**
+ * @param {BankAccount} account : user's bank account information 
+ * @returns a new HTML page of withdrawal menu. (fields to enter the bills to withdraw, buttons to either go back to previous menu or proceed)
+ */
+function withdrawPage(account) {
+    let container = billInputSelector("Please Enter The Withdrawal Amount", "Go Back", "Next");
+
+    let inputs = container.querySelectorAll(".bill-input");
+
+    // when each input field is changed, it updates the total amount to be withdrawn
+    inputs.forEach(function(input) {
+        input.addEventListener("change", function() {
+            let total = container.querySelector("#total");
+            total.innerHTML = billSummation(inputs);
+        });
+    }); 
+
+    let back = container.querySelector("#go-back");
+
+    // when the button is pressed, jumps back to account info page.
+    back.addEventListener("click", function() {
+        switchPage(config.sidePage, config.bankPage);
+        config.bankPage.append(mainBankPage(account));
+    });
+
+    let next = container.querySelector("#confirm");
+
+    // when the button is pressed, proceed to the confirmation page.
+    next.addEventListener("click", function() {
+        switchPage(config.sidePage, config.calculationBox);
+        config.calculationBox.append(calculationBoxPage("take", account, inputs));
+    });
+
+    return container;
+}
+
+/**
+ * @param {BankAccount} account :  user's bank account information 
+ * @returns a new HTML page of deposit menu. (fields to enter the bills to deposit, buttons to either go back to previous menu or proceed)
+ */
+function depositPage(account) {
+    let container = billInputSelector("Please Enter the Deposit Amount", "Go Back", "Next");
+
+    let inputs = container.querySelectorAll(".bill-input");
+
+    // when each input field is changed, it updates the total amount to be deposited
+    inputs.forEach(function(input) {
+        input.addEventListener("change", function() {
+            let total = container.querySelector("#total");
+            total.innerHTML = billSummation(inputs);
+        });
+    });
+
+    let back = container.querySelector("#go-back");
+
+    // when the button is pressed, jumps back to account info page.
+    back.addEventListener("click", function() {
+        switchPage(config.sidePage, config.bankPage);
+        config.bankPage.append(mainBankPage(account));
+    });
+
+    // when the button is pressed, proceed to the confirmation page.
+    let next = container.querySelector("#confirm");
+    next.addEventListener("click", function() {
+        switchPage(config.sidePage, config.calculationBox);
+        config.calculationBox.append(calculationBoxPage("deposit", account, inputs));
+    });
+    
+    return container;
+}
+
+/**
+ * @param {string} verb : indicates from which page (withdrawal, deposit) the user comes.
+ * @param {BankAccount} account : user's account info.
+ * @param {NodeListOf<Element>} inputs : collection of bill inputs.
+ * @returns a new HTML page of confirmation of the amount to be withdrawn/deposited, depending on the previous page.
+ */
+function calculationBoxPage(verb, account, inputs) {
+
+    // if withdrawing, calculate the actual amount the user can withdraw; if depositing, calculate the total amount of deposit.
+    let total = (verb === "take") ? calculateWithdrawalAmount(account, inputs) : calculateDepositAmount(inputs);
+    let container = billDialog(verb, inputs, total);
+
+    // when pressing the button, go back to the previous page (either withdrawal page or deposit page)
+    let back = container.querySelector("#go-back");
+    back.addEventListener("click", function() {
+        switchPage(config.calculationBox, config.sidePage);
+        
+        if (verb === "take") config.sidePage.append(withdrawPage(account));
+        else config.sidePage.append(depositPage(account));
+    });
+
+    // when pressing the button, updates the balance of the account and goes back to the bank information page.
+    let confirm = container.querySelector("#confirm");
+    confirm.addEventListener("click", function() {
+        account.updateMoney(verb, parseInt(total));
+        switchPage(config.calculationBox, config.bankPage);
+        config.bankPage.append(mainBankPage(account));
+    });
+
+    return container;
+}
+
+
+/**
+ * ------------------------------------------------------------------------------------------------
+ * PAGE FUNCTIONS - HELPER
+ * ------------------------------------------------------------------------------------------------
+ */
+
+/**
+ * @param {String} backString : title of the "go back" button
+ * @param {String} nextString : title of the "next" button
+ * @returns an HTML element containing the two buttons; one operates going back to previous page, one operates proceeding.
+ */
+function backNextBtn(backString, nextString) {
+    let container = document.createElement("div");
+
+    container.classList.add("d-flex", "justify-content-center", "col-11", "mt-3", "mb-4")
+    container.innerHTML = 
+    `
+        <button id="go-back" class="btn btn-outline-primary col-5 mx-1">${backString}</button>
+        <button id="confirm" class="btn btn-primary text-light fw-bold col-5">${nextString}</button>
+    `;
+
+    return container;
+}
+
+/**
+ * @param {String} title : title of the page (either withdrawal or deposit)
+ * @param {String} backString : title of the "go back" button (to be passed onto the helper function)
+ * @param {String} nextString : title of the "next button" (to be passed onto the helper fn)
+ * @returns a HTML element that contains bill input fields, go-back and next buttons and the field to show the total amount inputted so far.
+ */
 function billInputSelector(title, backString, nextString) {
     let container = document.createElement("div");
     container.classList.add("d-flex", "bg-light", "col-10", "flex-column", "align-items-center");
@@ -233,42 +420,20 @@ function billInputSelector(title, backString, nextString) {
     return container;
 }
 
-function backNextBtn(backString, nextString) {
-    let container = document.createElement("div");
-
-    container.classList.add("d-flex", "justify-content-center", "col-11", "mt-3", "mb-4")
-    container.innerHTML = 
-    `
-        <button id="go-back" class="btn btn-outline-primary col-5 mx-1">${backString}</button>
-        <button id="confirm" class="btn btn-primary text-light fw-bold col-5">${nextString}</button>
-    `;
-
-    return container;
-}
-
-function withdrawPage() {
-    let container = billInputSelector("Please Enter The Withdrawal Amount", "Go Back", "Next");
-    return container;
-}
-
-function billSummation(inputs) {
-    total = 0;
-
-    inputs.forEach(function(input) {
-        if (input.value) total += parseInt(input.value) * input.dataset.bill;
-    });
-
-    return total.toString();
-}
-
-function billDialog(inputs, totalAmount) {
+/**
+ * @param {String} verb : used for the main message on the top of the page (either "take" or "deposit")
+ * @param {NodeListOf<Element>} inputs : used to render the values users inputted in the previous page
+ * @param {int} totalAmount : total amount to withdraw/deposit.
+ * @returns an HTML element with list of bills users have answered, buttons to go back and proceed.
+ */
+function billDialog(verb, inputs, totalAmount) {
     let main = document.createElement("div");
     main.classList.add("bg-light", "d-flex", "col-10", "flex-column", "align-items-center");
 
     main.innerHTML = 
     `
     <div id="section-title" class="d-flex mt-3 col-11 justify-content-center align-items-center">
-        <p class="fw-bold fs-2 text-dark text-center">The money you are going to take is ...</p>
+        <p class="fw-bold fs-2 text-dark text-center">The money you are going to ${verb} is ...</p>
     </div>
 
     <div id='amounts-div' class="d-flex bg-dark flex-column col-8 p-1">
@@ -297,11 +462,4 @@ function billDialog(inputs, totalAmount) {
     main.append(backNextBtn("Go Back", "Confirm"));
 
     return main;
-}
-
-function calculateWithdrawalAmount(account, inputs) {
-    max_amount = account.money * 0.2;
-    amount = parseInt(billSummation(inputs));
-
-    return (max_amount < amount) ? max_amount.toString() : amount.toString();
 }
