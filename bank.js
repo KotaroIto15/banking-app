@@ -5,6 +5,10 @@
  */
 
 class BankAccount {
+
+    interest = 0.08;
+    daysPerYear = 365;
+
     // constructor
     constructor(firstName, lastName, email, type, money) {
         this.firstName = firstName;
@@ -20,11 +24,20 @@ class BankAccount {
         return this.firstName + " " + this.lastName;
     }
 
-    // if withdrawn, subtract amount from money.
-    // if deposited, add amount to money.
+    /**
+     * @param {String} verb : indicates the type of interaction. "take" if withdrawing, "deposit" if depositing, and "comeback" if leaving.
+     * @param {int} amount : for withdrawal/deposit, money you want to either withdraw/deposit. For leaving, this is the # of days the user leaves.
+     * if withdrawn, subtract amount from money.
+     * if deposited, add amount to money.
+     * if leaving, calculate the interest the user gains and update the balance based on the profit.
+     */
     updateMoney(verb, amount) {
         if (verb === "take") this.money -= amount;
-        else this.money += amount;
+        else if (verb === "deposit") this.money += amount;
+        else {
+            let profit = (this.money * Math.pow(1 + this.interest, amount/this.daysPerYear)) - this.money;
+            this.money += profit;
+        }
     }
 }
 
@@ -214,8 +227,7 @@ function mainBankPage(account) {
     // when the menu is selected, switches page to the come-back page.
     comebackMenu.addEventListener("click", function() {
         switchPage(config.bankPage, config.sidePage);
-        // config.sidePage.append(comebackPage(account));
-        console.log("test2");
+        config.sidePage.append(comebackPage(account));
     });
 
     comebackMenu.classList.add("col-11", "hoverable", "d-flex", "flex-column", "align-items-center", "justify-content-center",
@@ -302,6 +314,48 @@ function depositPage(account) {
         config.calculationBox.append(calculationBoxPage("deposit", account, inputs));
     });
     
+    return container;
+}
+
+/**
+ * @param {BankAccount} account : user's bank account info
+ */
+function comebackPage(account) {
+    let container = document.createElement("div");
+    container.classList.add("d-flex", "bg-light", "col-10", "flex-column", "align-items-center", "py-3");
+
+    container.innerHTML = 
+    `
+    <div id = "section-title" class = "d-flex col-10 justify-content-center align-items-center">
+        <p class = "fw-bold fs-2 text-center">How many days will you be gone?</p>
+    </div>
+
+    <div id = "days-div" class = "d-flex col-10 align-items-center my-2">
+        <input type="number" id = "days" class = "vw-100 text-start border-dark fw-bold rounded py-1" placeholder="4 days">
+    </div>
+    `;
+
+    container.append(backNextBtn("Go Back", "Confirm"));
+
+    let back = container.querySelector("#go-back");
+    back.addEventListener("click", function() {
+        switchPage(config.sidePage, config.bankPage);
+        config.bankPage.append(mainBankPage(account));
+    });
+
+    let confirm = container.querySelector("#confirm");
+    confirm.addEventListener("click", function() {
+        let days = container.querySelector("#days");
+
+        if (!days.value) {
+            alert("Please fill the required field before proceeding.");
+        } else {
+            account.updateMoney("comeback", parseInt(days.value));
+            switchPage(config.sidePage, config.bankPage);
+            config.bankPage.append(mainBankPage(account));
+        }     
+    });
+
     return container;
 }
 
